@@ -1,19 +1,14 @@
 import './styles/global.css';
 import './styles/kanban.css';
-import './styles/todo.css';
-import './styles/notes.css';
+import './styles/tickets.css';
+import './styles/modal.css';
+import './styles/detail.css';
 
+import { AppProvider, useApp } from './context/AppContext';
 import { KanbanBoard } from './components/KanbanBoard';
-import { TodoList } from './components/TodoList';
-import { NotesPanel } from './components/NotesPanel';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import type { KanbanCard, TodoItem } from './types';
 
-export default function App() {
-  const [cards, setCards] = useLocalStorage<KanbanCard[]>('bch-kanban-cards', []);
-  const [todos, setTodos] = useLocalStorage<TodoItem[]>('bch-todos', []);
-  const [notes, setNotes] = useLocalStorage<string>('bch-notes', '');
-
+function AppShell() {
+  const { currentUser } = useApp();
   return (
     <div className="app">
       <header className="app-header">
@@ -22,12 +17,22 @@ export default function App() {
           Maintenance Ticketing
           <span className="org"> · Bellingham Cohousing</span>
         </h1>
+        <div className="user-badge">
+          <span className="user-name">{currentUser.name}</span>
+          <span className={`role-chip role-${currentUser.role}`}>{currentUser.role}</span>
+        </div>
       </header>
       <main className="app-body">
-        <KanbanBoard cards={cards} setCards={setCards} />
-        <TodoList todos={todos} setTodos={setTodos} />
-        <NotesPanel notes={notes} setNotes={setNotes} />
+        <KanbanBoard />
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <AppShell />
+    </AppProvider>
   );
 }

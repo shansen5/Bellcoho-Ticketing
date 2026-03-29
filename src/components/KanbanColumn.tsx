@@ -1,105 +1,82 @@
-import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { KanbanCard } from './KanbanCard';
-import type { KanbanCard as KanbanCardType, KanbanColumn as ColType } from '../types';
+import { TicketCard } from './TicketCard';
+import { useCanCreateTicket } from '../context/AppContext';
+import type { Ticket, KanbanColumn as ColType } from '../types';
 
 const COLUMN_LABELS: Record<ColType, string> = {
-  todo: 'To Do',
+  tickets:   'Tickets',
   inprogress: 'In Progress',
-  complete: 'Complete',
+  completed: 'Completed',
 };
 
 interface Props {
   column: ColType;
-  cards: KanbanCardType[];
-  onAddCard: (column: ColType, title: string, description?: string) => void;
-  onDeleteCard: (id: string) => void;
+  openTickets: Ticket[];
+  canceledTickets?: Ticket[];   // only passed for 'tickets' column
+  onOpenTicket: (ticket: Ticket) => void;
+  onCancelTicket: (ticket: Ticket) => void;
+  onCreateTicket?: () => void;  // only for 'tickets' column
 }
 
-export function KanbanColumn({ column, cards, onAddCard, onDeleteCard }: Props) {
-  const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState('');
-  const [desc, setDesc] = useState('');
-
+export function KanbanColumn({
+  column, openTickets, canceledTickets = [],
+  onOpenTicket, onCancelTicket, onCreateTicket,
+}: Props) {
+  const canCreate = useCanCreateTicket();
   const { setNodeRef, isOver } = useDroppable({ id: column });
 
-  function handleSave() {
-    const t = title.trim();
-    if (!t) return;
-    onAddCard(column, t, desc.trim() || undefined);
-    setTitle('');
-    setDesc('');
-    setAdding(false);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSave();
-    }
-    if (e.key === 'Escape') {
-      setTitle('');
-      setDesc('');
-      setAdding(false);
-    }
-  }
-
-  const cardIds = cards.map((c) => c.id);
+  const allIds = [...openTickets, ...canceledTickets].map(t => t.id);
+  const totalCount = openTickets.length + canceledTickets.length;
 
   return (
     <div className="kanban-col">
       <div className="kanban-col-header">
-        <span className={`col-dot ${column}`} />
-        <span className={`col-label ${column}`}>{COLUMN_LABELS[column]}</span>
-        <span className="col-count">{cards.length}</span>
+        <span className={`col-dot col-${column}`} />
+        <span className={`col-label col-label-${column}`}>{COLUMN_LABELS[column]}</span>
+        <span className="col-count">{totalCount}</span>
+        {column === 'tickets' && canCreate && onCreateTicket && (
+          <button className="col-new-btn" onClick={onCreateTicket} title="New Ticket">
+            + New
+          </button>
+        )}
       </div>
 
-      <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+      <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
         <div
           ref={setNodeRef}
           className={`kanban-col-body${isOver ? ' is-over' : ''}`}
         >
-          {cards.length === 0 && !adding && (
-            <div className="col-empty">Drop cards here</div>
+          {totalCount === 0 && (
+            <div className="col-empty">No tickets</div>
           )}
-          {cards.map((card) => (
-            <KanbanCard key={card.id} card={card} onDelete={onDeleteCard} />
+
+          {openTickets.map(ticket => (
+            <TicketCard
+              key={ticket.id}
+              ticket={ticket}
+              onOpen={onOpenTicket}
+              onCancel={onCancelTicket}
+            />
           ))}
+
+          {canceledTickets.length > 0 && (
+            <>
+              <div className="canceled-section-header">
+                <span>Canceled</span>
+              </div>
+              {canceledTickets.map(ticket => (
+                <TicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  onOpen={onOpenTicket}
+                  // canceled tickets can be dragged to In Progress but not canceled again
+                />
+              ))}
+            </>
+          )}
         </div>
       </SortableContext>
-
-      {adding ? (
-        <div className="col-add-form">
-          <textarea
-            autoFocus
-            placeholder="Card title (Enter to save, Shift+Enter for new line)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <div className="col-add-form-actions">
-            <button className="btn-save" onClick={handleSave}>Add Card</button>
-            <button
-              className="btn-cancel"
-              onClick={() => {
-                setTitle('');
-                setDesc('');
-                setAdding(false);
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="col-add-trigger">
-          <button onClick={() => setAdding(true)}>
-            <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-            Add card
-          </button>
-        </div>
-      )}
     </div>
   );
 }
