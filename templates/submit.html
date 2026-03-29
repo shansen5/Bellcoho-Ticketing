@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Submit a Maintenance Request</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+
+<div class="public-form-wrap">
+
+  <!-- Header card -->
+  <div class="card shadow-sm border-0">
+    <div class="public-header">
+      <h4 class="mb-0"><i class="bi bi-tools me-2"></i>Maintenance Request</h4>
+      <p class="mb-0 mt-1 small opacity-75">Cohousing Condominium Association</p>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+
+        <!-- Contact info -->
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">Your Information</h6>
+
+        <div class="mb-3">
+          <label class="form-label">Your Name <span class="text-danger">*</span></label>
+          <select name="resident_id" class="form-select" required>
+            <option value="">— Select your name —</option>
+            {% for r in residents %}
+              <option value="{{ r.id }}">
+                {{ r.name }}{% if r.unit %} (Unit {{ r.unit.number }}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Location -->
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">Location</h6>
+
+        <div class="mb-2">
+          <label class="form-label">Unit with the problem</label>
+          <select name="unit_id" id="unit_id" class="form-select">
+            <option value="">— No specific unit —</option>
+            {% for u in units %}
+              <option value="{{ u.id }}">
+                Unit {{ u.number }} (Bldg {{ u.building.number }}{% if u.building.name %} – {{ u.building.name }}{% endif %})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3" id="building_row">
+          <label class="form-label">Building <span class="text-muted small">(if no specific unit)</span></label>
+          <select name="building_id" id="building_id" class="form-select">
+            <option value="">— Select building —</option>
+            {% for b in buildings %}
+              <option value="{{ b.id }}">{{ b.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Issue details -->
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">Issue Details</h6>
+
+        <div class="row g-3 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label">Category <span class="text-danger">*</span></label>
+            <select name="category" class="form-select" required>
+              {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Priority</label>
+            <select name="priority" class="form-select">
+              {% for p in priorities %}
+                <option value="{{ p }}" {% if p == 'Low' %}selected{% endif %}>{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Description <span class="text-danger">*</span></label>
+          <textarea name="description" class="form-control" rows="5"
+                    placeholder="Please describe the issue in as much detail as possible. Include location, when it started, how severe it is, etc."
+                    required></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Photos <span class="text-muted small">(optional – jpg, png, gif)</span></label>
+          <input type="file" name="photos" class="form-control" accept="image/*" multiple>
+          <div class="form-text">You may attach multiple photos. Max file size: 32 MB per file.</div>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-send me-1"></i> Submit Request
+          </button>
+        </div>
+
+      </form>
+    </div><!-- card-body -->
+  </div><!-- card -->
+
+  <p class="text-center text-muted small mt-3">
+    Your request will be reviewed by the maintenance team. You will be contacted via the email you provided.
+  </p>
+
+</div><!-- public-form-wrap -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const unitSel = document.getElementById('unit_id');
+  const bldgRow = document.getElementById('building_row');
+  function toggleBuilding() {
+    bldgRow.style.display = unitSel.value ? 'none' : '';
+    if (unitSel.value) document.getElementById('building_id').value = '';
+  }
+  unitSel.addEventListener('change', toggleBuilding);
+  toggleBuilding();
+</script>
+</body>
+</html>

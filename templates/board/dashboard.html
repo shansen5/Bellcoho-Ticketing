@@ -1,0 +1,116 @@
+{% extends "base_board.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h4 class="mb-4 fw-semibold">Dashboard</h4>
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+  {% set stat_items = [
+    ('new', 'New', 'bi-inbox', stats.new),
+    ('assigned', 'Assigned', 'bi-person-check', stats.assigned),
+    ('waiting', 'Waiting', 'bi-hourglass-split', stats.waiting),
+    ('completed', 'Completed', 'bi-check2-all', stats.completed),
+  ] %}
+  {% for key, label, icon, count in stat_items %}
+  <div class="col-6 col-md-3">
+    <a href="{{ url_for('board.ticket_list', status=label) }}" class="text-decoration-none">
+      <div class="card stat-card {{ key }} h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <i class="bi {{ icon }} fs-3 text-secondary"></i>
+          <div>
+            <div class="fs-3 fw-bold lh-1">{{ count }}</div>
+            <div class="text-muted small">{{ label }}</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+
+  <!-- Open tickets table -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center">
+        <span class="fw-semibold">Open Tickets</span>
+        <a href="{{ url_for('board.ticket_list', status='open') }}" class="ms-auto btn btn-sm btn-outline-secondary">View all</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Category</th>
+              <th>Unit / Bldg</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in open_tickets[:20] %}
+            <tr>
+              <td><a href="{{ url_for('board.ticket_detail', ticket_id=t.id) }}">#{{ t.id }}</a></td>
+              <td><span class="badge badge-{{ t.status }}">{{ t.status }}</span></td>
+              <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+              <td>{{ t.category }}</td>
+              <td>
+                {% if t.unit %}Unit {{ t.unit.number }}{% elif t.effective_building %}Bldg {{ t.effective_building.number }}{% else %}—{% endif %}
+              </td>
+              <td class="text-nowrap text-muted small">{{ t.date_submitted.strftime('%b %d') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-3">No open tickets.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Open by category -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">Open by Category</div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for cat, cnt in by_category.items() %}
+          <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+            <a href="{{ url_for('board.ticket_list', status='open', category=cat) }}"
+               class="text-decoration-none text-body">{{ cat }}</a>
+            {% if cnt > 0 %}
+              <span class="badge bg-primary rounded-pill">{{ cnt }}</span>
+            {% else %}
+              <span class="text-muted small">0</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Recent completed -->
+    <div class="card shadow-sm mt-3">
+      <div class="card-header fw-semibold">Recently Completed</div>
+      <div class="list-group list-group-flush">
+        {% for t in recent_completed %}
+        <a href="{{ url_for('board.ticket_detail', ticket_id=t.id) }}"
+           class="list-group-item list-group-item-action py-2 small">
+          <div class="d-flex justify-content-between">
+            <span>#{{ t.id }} – {{ t.category }}</span>
+            <span class="text-muted">{{ t.date_completed.strftime('%b %d') if t.date_completed else '—' }}</span>
+          </div>
+          <div class="text-muted text-truncate">{{ t.description[:60] }}</div>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted py-3 text-center small">No completed tickets yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

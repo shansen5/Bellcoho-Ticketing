@@ -1,0 +1,72 @@
+{% extends "base_board.html" %}
+{% block title %}Unit {{ unit.number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('board.units') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="mb-0 fw-semibold">
+    Unit {{ unit.number }}
+    <span class="text-muted fw-normal fs-6">– Building {{ unit.building.number }}
+      {% if unit.building.name %}({{ unit.building.name }}){% endif %}
+    </span>
+  </h4>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold small">Residents</div>
+      <ul class="list-group list-group-flush">
+        {% for r in unit.residents %}
+        <li class="list-group-item py-2 small">
+          <strong>{{ r.name }}</strong>
+          {% if r.email %}<br><a href="mailto:{{ r.email }}">{{ r.email }}</a>{% endif %}
+          {% if r.phone %}<br>{{ r.phone }}{% endif %}
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted small py-3 text-center">No residents on file.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold small">
+        All Tickets for Unit {{ unit.number }}
+        <span class="ms-1 badge bg-secondary">{{ tickets|length }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Status</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Description</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tickets %}
+            <tr>
+              <td><a href="{{ url_for('board.ticket_detail', ticket_id=t.id) }}">#{{ t.id }}</a></td>
+              <td><span class="badge badge-{{ t.status }}">{{ t.status }}</span></td>
+              <td>{{ t.category }}</td>
+              <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+              <td class="text-truncate" style="max-width:200px">{{ t.description }}</td>
+              <td class="text-nowrap text-muted small">{{ t.date_submitted.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted text-center py-3">No tickets for this unit.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

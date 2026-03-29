@@ -1,0 +1,106 @@
+{% extends "base_board.html" %}
+{% block title %}Vendors{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4">Vendors</h4>
+
+<div class="row g-4">
+
+  <!-- Add vendor -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">Add Vendor</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('board.add_vendor') }}">
+          <div class="mb-2">
+            <label class="form-label small">Company Name <span class="text-danger">*</span></label>
+            <input name="name" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Contact Person</label>
+            <input name="contact_person" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Phone</label>
+            <input name="phone" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Email</label>
+            <input name="email" type="email" class="form-control form-control-sm">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Specialty</label>
+            <input name="specialty" class="form-control form-control-sm"
+                   placeholder="e.g. Plumbing, HVAC, Electrical">
+          </div>
+          <button class="btn btn-primary btn-sm w-100">Add Vendor</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor list -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">All Vendors ({{ vendors|length }})</div>
+      {% if vendors %}
+      <div class="accordion accordion-flush" id="vendorAccordion">
+        {% for v in vendors %}
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed py-2" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#v{{ v.id }}">
+              <span class="fw-semibold me-2">{{ v.name }}</span>
+              {% if v.specialty %}<span class="badge bg-light text-dark border">{{ v.specialty }}</span>{% endif %}
+            </button>
+          </h2>
+          <div id="v{{ v.id }}" class="accordion-collapse collapse" data-bs-parent="#vendorAccordion">
+            <div class="accordion-body small">
+              <form method="post" action="{{ url_for('board.edit_vendor', vendor_id=v.id) }}">
+                <div class="row g-2 mb-2">
+                  <div class="col-sm-6">
+                    <label class="form-label small mb-1">Name</label>
+                    <input name="name" value="{{ v.name }}" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label small mb-1">Contact Person</label>
+                    <input name="contact_person" value="{{ v.contact_person or '' }}" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label small mb-1">Phone</label>
+                    <input name="phone" value="{{ v.phone or '' }}" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label small mb-1">Email</label>
+                    <input name="email" value="{{ v.email or '' }}" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label small mb-1">Specialty</label>
+                    <input name="specialty" value="{{ v.specialty or '' }}" class="form-control form-control-sm">
+                  </div>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label small mb-1">Notes</label>
+                  <textarea name="notes" class="form-control form-control-sm" rows="2">{{ v.notes or '' }}</textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                </div>
+              </form>
+              <form method="post" action="{{ url_for('board.delete_vendor', vendor_id=v.id) }}" class="mt-2">
+                <button type="submit" class="btn btn-sm btn-link text-danger p-0"
+                        onclick="return confirm('Delete this vendor?')">Delete vendor</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body text-muted text-center py-4">No vendors added yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

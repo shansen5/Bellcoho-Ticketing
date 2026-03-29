@@ -1,0 +1,293 @@
+{% extends "base_board.html" %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('board.ticket_list') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="mb-0 fw-semibold">Ticket #{{ ticket.id }}</h4>
+  <span class="badge badge-{{ ticket.status }} fs-6">{{ ticket.status }}</span>
+  <span class="badge badge-{{ ticket.priority }}">{{ ticket.priority }}</span>
+  <span class="ms-auto text-muted small">Submitted {{ ticket.date_submitted.strftime('%B %d, %Y') }}</span>
+  <form method="post" action="{{ url_for('board.delete_ticket', ticket_id=ticket.id) }}"
+        onsubmit="return confirm('Permanently delete Ticket #{{ ticket.id }}? This cannot be undone.')">
+    <button type="submit" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-trash me-1"></i>Delete
+    </button>
+  </form>
+</div>
+
+<div class="row g-4">
+
+  <!-- ===== Left: ticket form ===== -->
+  <div class="col-lg-7">
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header fw-semibold">Ticket Details</div>
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="action" value="update">
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Status</label>
+              <select name="status" class="form-select form-select-sm">
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if ticket.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Category</label>
+              <select name="category" class="form-select form-select-sm">
+                {% for c in categories %}
+                <option value="{{ c }}" {% if ticket.category == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Priority</label>
+              <select name="priority" class="form-select form-select-sm">
+                {% for p in priorities %}
+                <option value="{{ p }}" {% if ticket.priority == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Unit</label>
+              <select name="unit_id" class="form-select form-select-sm">
+                <option value="">— None / common area —</option>
+                {% for u in units %}
+                <option value="{{ u.id }}" {% if ticket.unit_id == u.id %}selected{% endif %}>
+                  Unit {{ u.number }} (Bldg {{ u.building.number }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Building (if no unit)</label>
+              <select name="building_id" class="form-select form-select-sm">
+                <option value="">—</option>
+                {% for b in buildings %}
+                <option value="{{ b.id }}" {% if ticket.building_id == b.id and not ticket.unit_id %}selected{% endif %}>
+                  {{ b.display_name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Assign to (board member / resident)</label>
+            <select name="assigned_to_resident_id" class="form-select form-select-sm">
+              <option value="">— Unassigned —</option>
+              {% for r in residents %}
+              <option value="{{ r.id }}" {% if ticket.assigned_to_resident_id == r.id %}selected{% endif %}>
+                {{ r.name }}{% if r.unit %} (Unit {{ r.unit.number }}){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Vendors</label>
+            <select name="vendor_ids" class="form-select form-select-sm" multiple size="4">
+              {% for v in vendors %}
+              <option value="{{ v.id }}"
+                {% if v in ticket.vendors %}selected{% endif %}>
+                {{ v.name }}{% if v.specialty %} – {{ v.specialty }}{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Hold Ctrl / Cmd to select multiple</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Description</label>
+            <textarea name="description" class="form-control form-control-sm" rows="5">{{ ticket.description }}</textarea>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Estimated Cost ($)</label>
+              <input name="estimated_cost" type="number" step="0.01" class="form-control form-control-sm"
+                     value="{{ ticket.estimated_cost or '' }}">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Final Cost ($)</label>
+              <input name="final_cost" type="number" step="0.01" class="form-control form-control-sm"
+                     value="{{ ticket.final_cost or '' }}">
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="bi bi-floppy me-1"></i>Save Changes
+            </button>
+            {% if ticket.status != 'Completed' %}
+            <button type="submit" name="status" value="Completed" class="btn btn-success btn-sm">
+              <i class="bi bi-check2 me-1"></i>Mark Complete
+            </button>
+            {% endif %}
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Submitted by info -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header small fw-semibold">Submitted By</div>
+      <div class="card-body py-2 small">
+        {% if ticket.submitted_by %}
+          <strong>{{ ticket.submitted_by.name }}</strong>
+          {% if ticket.submitted_by.email %} – <a href="mailto:{{ ticket.submitted_by.email }}">{{ ticket.submitted_by.email }}</a>{% endif %}
+          {% if ticket.submitted_by.unit %} (Unit {{ ticket.submitted_by.unit.number }}){% endif %}
+        {% elif ticket.submitted_by_name %}
+          {{ ticket.submitted_by_name }}
+          {% if ticket.submitted_by_email %} – <a href="mailto:{{ ticket.submitted_by_email }}">{{ ticket.submitted_by_email }}</a>{% endif %}
+        {% else %}
+          <span class="text-muted">Unknown</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="card shadow-sm">
+      <div class="card-header small fw-semibold">Timeline</div>
+      <div class="card-body py-2">
+        <table class="table table-sm mb-0 small">
+          <tr><th>Submitted</th><td>{{ ticket.date_submitted.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+          <tr><th>Assigned</th><td>{{ ticket.date_assigned.strftime('%Y-%m-%d %H:%M') if ticket.date_assigned else '—' }}</td></tr>
+          <tr><th>Completed</th><td>{{ ticket.date_completed.strftime('%Y-%m-%d %H:%M') if ticket.date_completed else '—' }}</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end col-lg-7 -->
+
+  <!-- ===== Right: attachments + comments ===== -->
+  <div class="col-lg-5">
+
+    <!-- Photos -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex align-items-center">
+        <span class="fw-semibold small">Photos</span>
+        <span class="ms-2 badge bg-secondary">{{ photos|length }}</span>
+      </div>
+      <div class="card-body">
+        {% if photos %}
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          {% for att in photos %}
+          <div class="position-relative">
+            <a href="{{ url_for('public.uploaded_file', filepath='photos/' + att.filename) }}" target="_blank">
+              <img src="{{ url_for('public.uploaded_file', filepath='photos/' + att.filename) }}"
+                   class="photo-thumb" alt="{{ att.original_filename }}"
+                   title="{{ att.original_filename }}"
+                   onerror="this.src=''; this.alt='Preview unavailable'">
+            </a>
+            <form method="post"
+                  action="{{ url_for('board.delete_attachment', ticket_id=ticket.id, att_id=att.id) }}"
+                  class="d-inline position-absolute top-0 end-0 m-0">
+              <button type="submit" class="btn btn-danger btn-sm p-0 px-1"
+                      onclick="return confirm('Remove photo?')"
+                      title="Remove">×</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted small mb-2">No photos attached.</p>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload">
+          <input type="file" name="photos" class="form-control form-control-sm" accept="image/*" multiple>
+          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">
+            <i class="bi bi-upload me-1"></i>Upload Photos
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex align-items-center">
+        <span class="fw-semibold small">Documents / Invoices</span>
+        <span class="ms-2 badge bg-secondary">{{ documents|length }}</span>
+      </div>
+      <div class="card-body">
+        {% if documents %}
+        <ul class="list-group list-group-flush mb-2">
+          {% for att in documents %}
+          <li class="list-group-item px-0 py-1 d-flex align-items-center gap-2 small">
+            <i class="bi bi-file-earmark-text text-secondary"></i>
+            <a href="{{ url_for('public.uploaded_file', filepath='documents/' + att.filename) }}" target="_blank">
+              {{ att.original_filename }}
+            </a>
+            <form method="post" class="ms-auto"
+                  action="{{ url_for('board.delete_attachment', ticket_id=ticket.id, att_id=att.id) }}">
+              <button type="submit" class="btn btn-link btn-sm text-danger p-0"
+                      onclick="return confirm('Remove document?')">remove</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted small mb-2">No documents attached.</p>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload">
+          <input type="file" name="documents" class="form-control form-control-sm"
+                 accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" multiple>
+          <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">
+            <i class="bi bi-upload me-1"></i>Upload Documents
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Comments / Notes -->
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold small">
+        Communication Notes
+        <span class="ms-1 badge bg-secondary">{{ ticket.comments.count() }}</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush" style="max-height:300px;overflow-y:auto">
+          {% for c in ticket.comments %}
+          <div class="list-group-item py-2">
+            <div class="d-flex gap-2 align-items-center mb-1">
+              <i class="bi bi-person-circle text-secondary"></i>
+              <strong class="small">{{ c.author }}</strong>
+              <span class="ms-auto text-muted small">{{ c.created_at.strftime('%b %d %H:%M') }}</span>
+            </div>
+            <div class="small">{{ c.body }}</div>
+          </div>
+          {% else %}
+          <div class="list-group-item text-muted small py-3 text-center">No notes yet.</div>
+          {% endfor %}
+        </div>
+        <div class="p-3 border-top">
+          <form method="post">
+            <input type="hidden" name="action" value="comment">
+            <textarea name="body" class="form-control form-control-sm mb-2" rows="3"
+                      placeholder="Add a note (visible to board members only)…"></textarea>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-chat-left-text me-1"></i>Add Note
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end col-lg-5 -->
+</div><!-- end row -->
+
+{% endblock %}

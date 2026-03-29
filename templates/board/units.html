@@ -1,0 +1,65 @@
+{% extends "base_board.html" %}
+{% block title %}Units{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4">Units</h4>
+
+<div class="row g-3">
+  {% for b in buildings %}
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">
+        Building {{ b.number }}{% if b.name %} – {{ b.name }}{% endif %}
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Unit</th>
+              <th>Residents</th>
+              <th>Open Tickets</th>
+              <th>Total Tickets</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in units if u.building_id == b.id %}
+            <tr>
+              <td class="fw-semibold">{{ u.number }}</td>
+              <td>
+                {% for r in u.residents %}
+                  <span class="badge bg-light text-dark border me-1">{{ r.name }}</span>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endfor %}
+              </td>
+              <td>
+                {% set open_count = u.tickets.filter_by(status='New').count() + u.tickets.filter_by(status='Assigned').count() + u.tickets.filter_by(status='Waiting').count() %}
+                {% if open_count > 0 %}
+                  <a href="{{ url_for('board.ticket_list', unit_id=u.id, status='open') }}"
+                     class="badge bg-primary text-decoration-none">{{ open_count }}</a>
+                {% else %}
+                  <span class="text-muted small">0</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('board.unit_detail', unit_id=u.id) }}" class="small">
+                  {{ u.tickets.count() }} tickets
+                </a>
+              </td>
+              <td class="small text-muted">{{ u.notes or '—' }}</td>
+              <td>
+                <a href="{{ url_for('board.unit_detail', unit_id=u.id) }}"
+                   class="btn btn-sm btn-outline-secondary py-0">View</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
