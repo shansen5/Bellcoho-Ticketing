@@ -20,7 +20,8 @@ static/uploads/documents/*
 !static/uploads/photos/.gitkeep
 !static/uploads/documents/.gitkeep
 
-# Sensitive/PII documents
+# Sensitive/PII data
+residents_data.py
 *.pdf
 *.odt
 
