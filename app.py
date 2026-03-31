@@ -13,8 +13,8 @@ from werkzeug.utils import secure_filename
 
 from models import (
     db, Building, Unit, Resident, Vendor, Ticket, TicketVendor,
-    Attachment, Comment, BoardUser,
-    STATUS_CHOICES, CATEGORY_CHOICES, PRIORITY_CHOICES
+    Attachment, Comment, BoardUser, Category,
+    STATUS_CHOICES, PRIORITY_CHOICES
 )
 
 # ---------------------------------------------------------------------------
@@ -81,9 +81,10 @@ def create_app(config=None):
         residents = Resident.query.order_by(Resident.name).all()
         units = Unit.query.order_by(Unit.number).all()
         buildings = Building.query.order_by(Building.number).all()
+        categories = Category.query.order_by(Category.name).all()
         if request.method == "POST":
             resident_id = request.form.get("resident_id") or None
-            category = request.form.get("category", "Other")
+            category_id = request.form.get("category") or None
             description = request.form.get("description", "").strip()
             priority = request.form.get("priority", "Low")
             unit_id = request.form.get("unit_id") or None
@@ -92,12 +93,12 @@ def create_app(config=None):
             if not resident_id:
                 flash("Please select your name.", "danger")
                 return render_template("submit.html", residents=residents, units=units,
-                                       buildings=buildings, categories=CATEGORY_CHOICES,
+                                       buildings=buildings, categories=categories,
                                        priorities=PRIORITY_CHOICES)
             if not description:
                 flash("Please describe the issue.", "danger")
                 return render_template("submit.html", residents=residents, units=units,
-                                       buildings=buildings, categories=CATEGORY_CHOICES,
+                                       buildings=buildings, categories=categories,
                                        priorities=PRIORITY_CHOICES)
 
             resident = db.session.get(Resident, int(resident_id))
@@ -109,7 +110,7 @@ def create_app(config=None):
 
             ticket = Ticket(
                 status="New",
-                category=category,
+                category_id=int(category_id) if category_id else None,
                 priority=priority,
                 unit_id=int(unit_id) if unit_id else None,
                 building_id=int(building_id) if building_id else None,
@@ -140,7 +141,7 @@ def create_app(config=None):
             return redirect(url_for("public.submit"))
 
         return render_template("submit.html", residents=residents, units=units,
-                               buildings=buildings, categories=CATEGORY_CHOICES,
+                               buildings=buildings, categories=categories,
                                priorities=PRIORITY_CHOICES)
 
     @public.route("/uploads/<path:filepath>")
@@ -203,9 +204,9 @@ def create_app(config=None):
             "completed": Ticket.query.filter_by(status="Completed").count(),
         }
         by_category = {}
-        for cat in CATEGORY_CHOICES:
+        for cat in Category.query.order_by(Category.name).all():
             by_category[cat] = Ticket.query.filter(
-                Ticket.category == cat,
+                Ticket.category_id == cat.id,
                 Ticket.status.in_(["New", "Assigned", "Waiting"])
             ).count()
         return render_template(
@@ -238,7 +239,7 @@ def create_app(config=None):
             else:
                 q = q.filter(Ticket.status == status)
         if category:
-            q = q.filter(Ticket.category == category)
+            q = q.filter(Ticket.category_id == int(category))
         if priority:
             q = q.filter(Ticket.priority == priority)
         if unit_id:
@@ -276,7 +277,7 @@ def create_app(config=None):
             tickets=tickets,
             units=units,
             buildings=buildings,
-            categories=CATEGORY_CHOICES,
+            categories=Category.query.order_by(Category.name).all(),
             priorities=PRIORITY_CHOICES,
             statuses=STATUS_CHOICES,
             filters={
@@ -337,7 +338,9 @@ def create_app(config=None):
             # Default: update ticket fields
             old_status = ticket.status
             ticket.status = request.form.get("status", ticket.status)
-            ticket.category = request.form.get("category", ticket.category)
+            new_cat_id = request.form.get("category")
+            if new_cat_id:
+                ticket.category_id = int(new_cat_id)
             ticket.priority = request.form.get("priority", ticket.priority)
             ticket.description = request.form.get("description", ticket.description)
 
@@ -387,7 +390,7 @@ def create_app(config=None):
             vendors=vendors,
             photos=photos,
             documents=documents,
-            categories=CATEGORY_CHOICES,
+            categories=Category.query.order_by(Category.name).all(),
             priorities=PRIORITY_CHOICES,
             statuses=STATUS_CHOICES,
         )

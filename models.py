@@ -88,15 +88,25 @@ class TicketVendor(db.Model):
 
 
 STATUS_CHOICES = ["New", "Assigned", "Waiting", "Completed"]
-CATEGORY_CHOICES = ["Heating", "Plumbing", "Electrical", "Exterior", "Appliances", "Structural", "Other"]
 PRIORITY_CHOICES = ["Low", "Normal", "Urgent"]
+
+
+class Category(db.Model):
+    __tablename__ = "categories"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+
+    tickets = db.relationship("Ticket", back_populates="category", lazy="dynamic")
+
+    def __repr__(self):
+        return self.name
 
 
 class Ticket(db.Model):
     __tablename__ = "tickets"
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20), nullable=False, default="New")
-    category = db.Column(db.String(30), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
     priority = db.Column(db.String(10), nullable=False, default="Low")
 
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
@@ -118,6 +128,7 @@ class Ticket(db.Model):
     date_completed = db.Column(db.DateTime, nullable=True)
 
     # Relationships
+    category = db.relationship("Category", back_populates="tickets")
     unit = db.relationship("Unit", back_populates="tickets")
     building = db.relationship("Building", back_populates="tickets")
     submitted_by = db.relationship(
@@ -146,7 +157,7 @@ class Ticket(db.Model):
         return [tv.vendor for tv in self.ticket_vendors]
 
     def __repr__(self):
-        return f"Ticket #{self.id}: {self.category}"
+        return f"Ticket #{self.id}: {self.category.name if self.category else '—'}"
 
 
 class Attachment(db.Model):

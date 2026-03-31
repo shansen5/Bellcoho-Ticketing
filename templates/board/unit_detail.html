@@ -55,7 +55,7 @@
             <tr>
               <td><a href="{{ url_for('board.ticket_detail', ticket_id=t.id) }}">#{{ t.id }}</a></td>
               <td><span class="badge badge-{{ t.status }}">{{ t.status }}</span></td>
-              <td>{{ t.category }}</td>
+              <td>{{ t.category.name }}</td>
               <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
               <td class="text-truncate" style="max-width:200px">{{ t.description }}</td>
               <td class="text-nowrap text-muted small">{{ t.date_submitted.strftime('%Y-%m-%d') }}</td>

@@ -56,7 +56,7 @@
               <td><a href="{{ url_for('board.ticket_detail', ticket_id=t.id) }}">#{{ t.id }}</a></td>
               <td><span class="badge badge-{{ t.status }}">{{ t.status }}</span></td>
               <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
-              <td>{{ t.category }}</td>
+              <td>{{ t.category.name }}</td>
               <td>
                 {% if t.unit %}Unit {{ t.unit.number }}{% elif t.effective_building %}Bldg {{ t.effective_building.number }}{% else %}—{% endif %}
               </td>
@@ -79,8 +79,8 @@
         <ul class="list-group list-group-flush">
           {% for cat, cnt in by_category.items() %}
           <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-            <a href="{{ url_for('board.ticket_list', status='open', category=cat) }}"
-               class="text-decoration-none text-body">{{ cat }}</a>
+            <a href="{{ url_for('board.ticket_list', status='open', category=cat.id) }}"
+               class="text-decoration-none text-body">{{ cat.name }}</a>
             {% if cnt > 0 %}
               <span class="badge bg-primary rounded-pill">{{ cnt }}</span>
             {% else %}
@@ -100,7 +100,7 @@
         <a href="{{ url_for('board.ticket_detail', ticket_id=t.id) }}"
            class="list-group-item list-group-item-action py-2 small">
           <div class="d-flex justify-content-between">
-            <span>#{{ t.id }} – {{ t.category }}</span>
+            <span>#{{ t.id }} – {{ t.category.name }}</span>
             <span class="text-muted">{{ t.date_completed.strftime('%b %d') if t.date_completed else '—' }}</span>
           </div>
           <div class="text-muted text-truncate">{{ t.description[:60] }}</div>
