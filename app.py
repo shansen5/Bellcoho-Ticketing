@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 
 from models import (
     db, Building, Unit, Resident, Vendor, Ticket, TicketVendor,
-    Attachment, Comment, BoardUser, Category,
+    Attachment, Comment, BoardUser, Category, BudgetCategory,
     STATUS_CHOICES, PRIORITY_CHOICES
 )
 
@@ -356,10 +356,15 @@ def create_app(config=None):
             assigned_id = request.form.get("assigned_to_resident_id") or None
             ticket.assigned_to_resident_id = int(assigned_id) if assigned_id else None
 
+            other_worker_ids = request.form.getlist("other_worker_ids")
+            ticket.other_workers = ",".join(other_worker_ids) if other_worker_ids else None
+
             est = request.form.get("estimated_cost") or None
             ticket.estimated_cost = float(est) if est else None
             fin = request.form.get("final_cost") or None
             ticket.final_cost = float(fin) if fin else None
+
+            ticket.budget_category = request.form.get("budget_category") or None
 
             # Timestamps based on status transitions
             if ticket.status != "New" and not ticket.date_assigned:
@@ -393,6 +398,7 @@ def create_app(config=None):
             categories=Category.query.order_by(Category.name).all(),
             priorities=PRIORITY_CHOICES,
             statuses=STATUS_CHOICES,
+            budget_categories=BudgetCategory.query.order_by(BudgetCategory.name).all(),
         )
 
     @board.route("/tickets/<int:ticket_id>/delete", methods=["POST"])
@@ -539,6 +545,17 @@ def create_app(config=None):
     def init_db():
         """Create tables and seed initial data."""
         db.create_all()
+        # Add new columns to existing databases (safe no-ops if already present)
+        with db.engine.connect() as conn:
+            for col_sql in [
+                "ALTER TABLE tickets ADD COLUMN other_workers TEXT",
+                "ALTER TABLE tickets ADD COLUMN budget_category VARCHAR(100)",
+            ]:
+                try:
+                    conn.execute(db.text(col_sql))
+                    conn.commit()
+                except Exception:
+                    pass  # Column already exists
         from seed import seed_data
         seed_data(db)
         print("Database initialised.")

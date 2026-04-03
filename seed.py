@@ -1,5 +1,5 @@
 """Seed script – populates Buildings (1-12), Units (1-33), categories, and a default admin user."""
-from models import Building, Unit, BoardUser, Category
+from models import Building, Unit, BoardUser, Category, BudgetCategory
 
 
 # Unit-to-building mapping for a 33-unit, 12-building community.
@@ -34,6 +34,27 @@ BUILDING_NAMES = {
 }
 
 
+DEFAULT_BUDGET_CATEGORIES = [
+    "Building Work Party",
+    "Buildings Unpredictable",
+    "Dryer vents",
+    "Materials for painting, etc.",
+    "Repairs to heat, water systems",
+    "Smoke alarm check/batteries",
+    "Sprinklers, fire extin., backflow",
+    "Sump Pump Inspection/Repair",
+    "Upper A Stair Treads",
+    "Upper gutter cleaning",
+    "Utility repairs",
+    "Workshop expenses",
+    "Grounds Unpredictable",
+    "Lighting and electricity",
+    "Pest control",
+    "Pressure Washer",
+    "Security",
+]
+
+
 DEFAULT_CATEGORIES = [
     'Buildings - Appliances',
     'Buildings - Electrical',
@@ -49,6 +70,12 @@ DEFAULT_CATEGORIES = [
 
 
 def seed_data(db):
+    # Budget categories
+    for name in DEFAULT_BUDGET_CATEGORIES:
+        if not BudgetCategory.query.filter_by(name=name).first():
+            db.session.add(BudgetCategory(name=name))
+    db.session.flush()
+
     # Categories
     for name in DEFAULT_CATEGORIES:
         if not Category.query.filter_by(name=name).first():

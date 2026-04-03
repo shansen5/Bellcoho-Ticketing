@@ -89,6 +89,13 @@ class TicketVendor(db.Model):
 
 STATUS_CHOICES = ["New", "Assigned", "Waiting", "Completed"]
 PRIORITY_CHOICES = ["Low", "Normal", "Urgent"]
+class BudgetCategory(db.Model):
+    __tablename__ = "budget_categories"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+
+    def __repr__(self):
+        return self.name
 
 
 class Category(db.Model):
@@ -118,10 +125,13 @@ class Ticket(db.Model):
     submitted_by_email = db.Column(db.String(200))  # fallback email
 
     assigned_to_resident_id = db.Column(db.Integer, db.ForeignKey("residents.id"), nullable=True)
+    # Comma-separated resident IDs of additional workers
+    other_workers = db.Column(db.Text, nullable=True)
 
     description = db.Column(db.Text, nullable=False)
     estimated_cost = db.Column(db.Float, nullable=True)
     final_cost = db.Column(db.Float, nullable=True)
+    budget_category = db.Column(db.String(100), nullable=True)
 
     date_submitted = db.Column(db.DateTime, default=datetime.utcnow)
     date_assigned = db.Column(db.DateTime, nullable=True)

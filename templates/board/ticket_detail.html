@@ -95,6 +95,19 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label small fw-semibold">Other Workers</label>
+            {% set other_worker_ids = ticket.other_workers.split(',') if ticket.other_workers else [] %}
+            <select name="other_worker_ids" class="form-select form-select-sm" multiple size="4">
+              {% for r in residents %}
+              <option value="{{ r.id }}" {% if r.id|string in other_worker_ids %}selected{% endif %}>
+                {{ r.name }}{% if r.unit %} (Unit {{ r.unit.number }}){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Hold Ctrl / Cmd to select multiple</div>
+          </div>
+
+          <div class="mb-3">
             <label class="form-label small fw-semibold">Vendors</label>
             <select name="vendor_ids" class="form-select form-select-sm" multiple size="4">
               {% for v in vendors %}
@@ -123,6 +136,16 @@
               <input name="final_cost" type="number" step="0.01" class="form-control form-control-sm"
                      value="{{ ticket.final_cost or '' }}">
             </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Budget Category</label>
+            <select name="budget_category" class="form-select form-select-sm">
+              <option value="">— None —</option>
+              {% for bc in budget_categories %}
+              <option value="{{ bc.name }}" {% if ticket.budget_category == bc.name %}selected{% endif %}>{{ bc.name }}</option>
+              {% endfor %}
+            </select>
           </div>
 
           <div class="d-flex gap-2">
