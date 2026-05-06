@@ -1,0 +1,80 @@
+{% extends "base_board.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <h4 class="fw-semibold mb-0"><i class="bi bi-file-earmark-text me-2"></i>Reports</h4>
+</div>
+
+<div class="card shadow-sm" style="max-width:560px">
+  <div class="card-body">
+    <p class="text-muted small mb-4">
+      Choose your filters and export format. CSV opens in Excel/Sheets; the Print view
+      can be saved as a PDF using your browser's <strong>Print → Save as PDF</strong> option.
+    </p>
+
+    <form method="get" id="reportForm">
+
+      <!-- Status -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Ticket Status</label>
+        <select name="status" class="form-select">
+          <option value="">All statuses</option>
+          <option value="open">Open (New + Assigned + Waiting)</option>
+          {% for s in statuses %}
+          <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Timeframe -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Timeframe</label>
+        <select name="timeframe" class="form-select" id="timeframeSelect">
+          <option value="">All time</option>
+          <option value="30days">Last 30 days</option>
+          <option value="90days">Last 90 days</option>
+          <option value="12months">Last 12 months</option>
+          <option value="custom">Custom date range…</option>
+        </select>
+      </div>
+
+      <!-- Custom date range (hidden unless custom) -->
+      <div id="customDates" class="mb-3 d-none">
+        <div class="row g-2">
+          <div class="col">
+            <label class="form-label small">From</label>
+            <input type="date" name="date_from" class="form-control form-control-sm">
+          </div>
+          <div class="col">
+            <label class="form-label small">To</label>
+            <input type="date" name="date_to" class="form-control form-control-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- Export buttons -->
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" formaction="{{ url_for('board.reports_download') }}"
+                class="btn btn-success">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i>Download CSV
+        </button>
+        <button type="submit" formaction="{{ url_for('board.reports_print') }}"
+                formtarget="_blank"
+                class="btn btn-primary">
+          <i class="bi bi-printer me-1"></i>Print / Save as PDF
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('timeframeSelect').addEventListener('change', function () {
+    document.getElementById('customDates').classList.toggle('d-none', this.value !== 'custom');
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket Report</title>
+  <style>
+    /* ── Screen styles ── */
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      margin: 0;
+      padding: 20px;
+      color: #1a1a1a;
+      background: #f5f5f5;
+    }
+    .report-wrapper {
+      background: #fff;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+      border-radius: 6px;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+    .print-bar button {
+      padding: 8px 18px;
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .print-bar button:hover { background: #0b5ed7; }
+
+    h2 { margin: 0 0 4px; font-size: 20px; }
+    .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    thead th {
+      background: #343a40;
+      color: #fff;
+      text-align: left;
+      padding: 6px 8px;
+      white-space: nowrap;
+    }
+    tbody tr:nth-child(even) { background: #f8f9fa; }
+    tbody td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #dee2e6;
+      vertical-align: top;
+    }
+    .desc { max-width: 260px; }
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-New      { background:#cfe2ff; color:#084298; }
+    .badge-Assigned { background:#fff3cd; color:#664d03; }
+    .badge-Waiting  { background:#e2d9f3; color:#432874; }
+    .badge-Completed{ background:#d1e7dd; color:#0a3622; }
+    .badge-Low      { background:#e9ecef; color:#495057; }
+    .badge-Normal   { background:#cfe2ff; color:#084298; }
+    .badge-Urgent   { background:#f8d7da; color:#842029; }
+    .no-tickets { text-align: center; padding: 40px; color: #888; }
+
+    /* ── Print styles ── */
+    @media print {
+      body { background: #fff; padding: 0; font-size: 11px; }
+      .report-wrapper { box-shadow: none; border-radius: 0; padding: 0; max-width: none; }
+      .print-bar { display: none; }
+      thead th { background: #343a40 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tbody tr:nth-child(even) { background: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="report-wrapper">
+
+  <div class="print-bar">
+    <div>
+      <h2>Ticket Report</h2>
+      <div class="meta">
+        Generated: {{ generated_at.strftime('%Y-%m-%d %H:%M') }} UTC
+        {% if filters.status %} &nbsp;·&nbsp; Status: <strong>{{ filters.status }}</strong>{% endif %}
+        {% if filters.timeframe == '30days' %} &nbsp;·&nbsp; Last 30 days
+        {% elif filters.timeframe == '90days' %} &nbsp;·&nbsp; Last 90 days
+        {% elif filters.timeframe == '12months' %} &nbsp;·&nbsp; Last 12 months
+        {% elif filters.timeframe == 'custom' %}
+          &nbsp;·&nbsp;
+          {% if filters.date_from %}From {{ filters.date_from }}{% endif %}
+          {% if filters.date_to %} to {{ filters.date_to }}{% endif %}
+        {% endif %}
+        &nbsp;·&nbsp; <strong>{{ tickets|length }}</strong> ticket{{ 's' if tickets|length != 1 }}
+      </div>
+    </div>
+    <button onclick="window.print()">&#128438; Print / Save as PDF</button>
+  </div>
+
+  {% if tickets %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Status</th>
+        <th>Priority</th>
+        <th>Category</th>
+        <th>Unit</th>
+        <th>Bldg</th>
+        <th>Submitted By</th>
+        <th>Description</th>
+        <th>Submitted</th>
+        <th>Completed</th>
+        <th>Est. Cost</th>
+        <th>Final Cost</th>
+        <th>Budget Cat.</th>
+        <th>Vendors</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tickets %}
+      {% set bldg = t.effective_building %}
+      <tr>
+        <td>{{ t.id }}</td>
+        <td><span class="badge badge-{{ t.status }}">{{ t.status }}</span></td>
+        <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+        <td>{{ t.category.name if t.category else '—' }}</td>
+        <td>{% if t.unit %}Unit {{ t.unit.number }}{% else %}—{% endif %}</td>
+        <td>{% if bldg %}Bldg {{ bldg.number }}{% else %}—{% endif %}</td>
+        <td class="text-nowrap">{{ t.submitted_by_name or '—' }}</td>
+        <td class="desc">{{ t.description }}</td>
+        <td>{{ t.date_submitted.strftime('%Y-%m-%d') if t.date_submitted else '—' }}</td>
+        <td>{{ t.date_completed.strftime('%Y-%m-%d') if t.date_completed else '—' }}</td>
+        <td>{% if t.estimated_cost is not none %}${{ '%.2f'|format(t.estimated_cost) }}{% else %}—{% endif %}</td>
+        <td>{% if t.final_cost is not none %}${{ '%.2f'|format(t.final_cost) }}{% else %}—{% endif %}</td>
+        <td>{{ t.budget_category or '—' }}</td>
+        <td>{{ t.ticket_vendors | map(attribute='vendor') | map(attribute='name') | join(', ') or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="no-tickets">No tickets match the selected filters.</div>
+  {% endif %}
+
+</div>
+</body>
+</html>

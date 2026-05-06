@@ -50,6 +50,12 @@
       <i class="bi bi-building me-1"></i> Buildings
     </a>
 
+    <div class="nav-section mt-2">Reports</div>
+    <a href="{{ url_for('board.reports') }}"
+       class="nav-link {% if request.endpoint == 'board.reports' %}active{% endif %}">
+      <i class="bi bi-file-earmark-text me-1"></i> Export Report
+    </a>
+
     <div class="nav-section mt-2">Admin</div>
     <a href="{{ url_for('board.residents') }}"
        class="nav-link {% if request.endpoint == 'board.residents' %}active{% endif %}">

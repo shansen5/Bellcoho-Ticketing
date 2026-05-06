@@ -2,9 +2,12 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
+import csv
+import io
+
 from flask import (
     Flask, render_template, redirect, url_for, request,
-    flash, send_from_directory, abort, jsonify
+    flash, send_from_directory, abort, jsonify, make_response, Response
 )
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, current_user
@@ -285,6 +288,103 @@ def create_app(config=None):
                 "unit_id": unit_id, "building_id": building_id,
                 "search": search, "timeframe": timeframe
             },
+        )
+
+    # ---------- Reports -----------------------------------------------------
+
+    def _build_report_query():
+        """Build a Ticket query from report filter params. Returns (query, filters_dict)."""
+        status = request.args.get("status", "")
+        date_from = request.args.get("date_from", "").strip()
+        date_to = request.args.get("date_to", "").strip()
+        timeframe = request.args.get("timeframe", "")
+
+        q = Ticket.query
+
+        if status == "open":
+            q = q.filter(Ticket.status.in_(["New", "Assigned", "Waiting"]))
+        elif status:
+            q = q.filter(Ticket.status == status)
+
+        if timeframe == "30days":
+            q = q.filter(Ticket.date_submitted >= datetime.utcnow() - timedelta(days=30))
+        elif timeframe == "90days":
+            q = q.filter(Ticket.date_submitted >= datetime.utcnow() - timedelta(days=90))
+        elif timeframe == "12months":
+            q = q.filter(Ticket.date_submitted >= datetime.utcnow() - timedelta(days=365))
+        elif timeframe == "custom":
+            if date_from:
+                try:
+                    q = q.filter(Ticket.date_submitted >= datetime.strptime(date_from, "%Y-%m-%d"))
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    # Include all of date_to day
+                    q = q.filter(Ticket.date_submitted < datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1))
+                except ValueError:
+                    pass
+
+        tickets = q.order_by(Ticket.date_submitted.desc()).all()
+        filters = {"status": status, "timeframe": timeframe, "date_from": date_from, "date_to": date_to}
+        return tickets, filters
+
+    @board.route("/reports")
+    @login_required
+    def reports():
+        return render_template(
+            "board/reports.html",
+            statuses=STATUS_CHOICES,
+        )
+
+    @board.route("/reports/download")
+    @login_required
+    def reports_download():
+        tickets, filters = _build_report_query()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Ticket #", "Status", "Priority", "Category",
+            "Unit", "Building", "Submitted By", "Description",
+            "Date Submitted", "Date Assigned", "Date Completed",
+            "Estimated Cost", "Final Cost", "Budget Category", "Vendors",
+        ])
+        for t in tickets:
+            bldg = t.effective_building
+            writer.writerow([
+                t.id,
+                t.status,
+                t.priority,
+                t.category.name if t.category else "",
+                f"Unit {t.unit.number}" if t.unit else "",
+                f"Bldg {bldg.number}" if bldg else "",
+                t.submitted_by_name or "",
+                t.description,
+                t.date_submitted.strftime("%Y-%m-%d") if t.date_submitted else "",
+                t.date_assigned.strftime("%Y-%m-%d") if t.date_assigned else "",
+                t.date_completed.strftime("%Y-%m-%d") if t.date_completed else "",
+                f"{t.estimated_cost:.2f}" if t.estimated_cost is not None else "",
+                f"{t.final_cost:.2f}" if t.final_cost is not None else "",
+                t.budget_category or "",
+                ", ".join(tv.vendor.name for tv in t.ticket_vendors),
+            ])
+
+        csv_bytes = output.getvalue().encode("utf-8-sig")  # BOM for Excel compatibility
+        resp = make_response(csv_bytes)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=tickets_report.csv"
+        return resp
+
+    @board.route("/reports/print")
+    @login_required
+    def reports_print():
+        tickets, filters = _build_report_query()
+        return render_template(
+            "board/report_print.html",
+            tickets=tickets,
+            filters=filters,
+            generated_at=datetime.utcnow(),
         )
 
     # ---------- Ticket detail / edit ----------------------------------------
