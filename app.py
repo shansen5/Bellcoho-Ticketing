@@ -294,17 +294,48 @@ def create_app(config=None):
 
     def _build_report_query():
         """Build a Ticket query from report filter params. Returns (query, filters_dict)."""
-        status = request.args.get("status", "")
-        date_from = request.args.get("date_from", "").strip()
-        date_to = request.args.get("date_to", "").strip()
-        timeframe = request.args.get("timeframe", "")
+        statuses     = [v for v in request.args.getlist("status")      if v]
+        priorities   = [v for v in request.args.getlist("priority")    if v]
+        category_ids = [v for v in request.args.getlist("category_id") if v]
+        building_ids = [v for v in request.args.getlist("building_id") if v]
+        unit_ids     = [v for v in request.args.getlist("unit_id")     if v]
+
+        timeframe    = request.args.get("timeframe", "")
+        date_from    = request.args.get("date_from", "").strip()
+        date_to      = request.args.get("date_to", "").strip()
 
         q = Ticket.query
 
-        if status == "open":
-            q = q.filter(Ticket.status.in_(["New", "Assigned", "Waiting"]))
-        elif status:
-            q = q.filter(Ticket.status == status)
+        if statuses:
+            q = q.filter(Ticket.status.in_(statuses))
+
+        if priorities:
+            q = q.filter(Ticket.priority.in_(priorities))
+
+        if category_ids:
+            try:
+                q = q.filter(Ticket.category_id.in_([int(c) for c in category_ids]))
+            except ValueError:
+                pass
+
+        if unit_ids or building_ids:
+            conditions = []
+            if unit_ids:
+                try:
+                    conditions.append(Ticket.unit_id.in_([int(u) for u in unit_ids]))
+                except ValueError:
+                    pass
+            if building_ids:
+                try:
+                    bid_list = [int(b) for b in building_ids]
+                    unit_ids_in_bldgs = [u.id for u in Unit.query.filter(Unit.building_id.in_(bid_list)).all()]
+                    conditions.append(Ticket.building_id.in_(bid_list))
+                    if unit_ids_in_bldgs:
+                        conditions.append(Ticket.unit_id.in_(unit_ids_in_bldgs))
+                except ValueError:
+                    pass
+            if conditions:
+                q = q.filter(db.or_(*conditions))
 
         if timeframe == "30days":
             q = q.filter(Ticket.date_submitted >= datetime.utcnow() - timedelta(days=30))
@@ -320,13 +351,16 @@ def create_app(config=None):
                     pass
             if date_to:
                 try:
-                    # Include all of date_to day
                     q = q.filter(Ticket.date_submitted < datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1))
                 except ValueError:
                     pass
 
         tickets = q.order_by(Ticket.date_submitted.desc()).all()
-        filters = {"status": status, "timeframe": timeframe, "date_from": date_from, "date_to": date_to}
+        filters = {
+            "statuses": statuses, "priorities": priorities,
+            "category_ids": category_ids, "building_ids": building_ids, "unit_ids": unit_ids,
+            "timeframe": timeframe, "date_from": date_from, "date_to": date_to,
+        }
         return tickets, filters
 
     @board.route("/reports")
@@ -335,6 +369,10 @@ def create_app(config=None):
         return render_template(
             "board/reports.html",
             statuses=STATUS_CHOICES,
+            priorities=PRIORITY_CHOICES,
+            categories=Category.query.order_by(Category.name).all(),
+            buildings=Building.query.order_by(Building.number).all(),
+            units=Unit.query.order_by(Unit.number).all(),
         )
 
     @board.route("/reports/download")
@@ -380,10 +418,22 @@ def create_app(config=None):
     @login_required
     def reports_print():
         tickets, filters = _build_report_query()
+        # Resolve IDs to labels for display in the print header
+        filter_labels = {}
+        if filters.get("category_ids"):
+            cats = Category.query.filter(Category.id.in_([int(c) for c in filters["category_ids"]])).all()
+            filter_labels["categories"] = ", ".join(c.name for c in cats)
+        if filters.get("building_ids"):
+            bldgs = Building.query.filter(Building.id.in_([int(b) for b in filters["building_ids"]])).all()
+            filter_labels["buildings"] = ", ".join(b.display_name for b in bldgs)
+        if filters.get("unit_ids"):
+            units_sel = Unit.query.filter(Unit.id.in_([int(u) for u in filters["unit_ids"]])).all()
+            filter_labels["units"] = ", ".join(f"Unit {u.number}" for u in units_sel)
         return render_template(
             "board/report_print.html",
             tickets=tickets,
             filters=filters,
+            filter_labels=filter_labels,
             generated_at=datetime.utcnow(),
         )
 

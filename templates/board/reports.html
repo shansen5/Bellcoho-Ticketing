@@ -6,23 +6,67 @@
   <h4 class="fw-semibold mb-0"><i class="bi bi-file-earmark-text me-2"></i>Reports</h4>
 </div>
 
-<div class="card shadow-sm" style="max-width:560px">
+<div class="card shadow-sm" style="max-width:600px">
   <div class="card-body">
     <p class="text-muted small mb-4">
       Choose your filters and export format. CSV opens in Excel/Sheets; the Print view
       can be saved as a PDF using your browser's <strong>Print → Save as PDF</strong> option.
     </p>
 
+    <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Hold <kbd>Ctrl</kbd> (or <kbd>⌘</kbd> on Mac) to select multiple values in any list.</p>
+
     <form method="get" id="reportForm">
 
       <!-- Status -->
-      <div class="mb-3">
+      <div class="mb-3 mt-3">
         <label class="form-label fw-semibold">Ticket Status</label>
-        <select name="status" class="form-select">
-          <option value="">All statuses</option>
-          <option value="open">Open (New + Assigned + Waiting)</option>
+        <select name="status" class="form-select" multiple size="{{ [statuses|length + 1, 5]|min }}">
+          <option value="">Any status</option>
           {% for s in statuses %}
           <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Priority -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Priority</label>
+        <select name="priority" class="form-select" multiple size="{{ [priorities|length + 1, 5]|min }}">
+          <option value="">Any priority</option>
+          {% for p in priorities %}
+          <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Category -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Category</label>
+        <select name="category_id" class="form-select" multiple size="{{ [categories|length + 1, 6]|min }}">
+          <option value="">Any category</option>
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Building / Unit -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Building</label>
+        <select name="building_id" class="form-select" multiple size="{{ [buildings|length + 1, 6]|min }}">
+          <option value="">Any building</option>
+          {% for b in buildings %}
+          <option value="{{ b.id }}">{{ b.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Unit</label>
+        <select name="unit_id" class="form-select" multiple size="{{ [units|length + 1, 6]|min }}">
+          <option value="">Any unit</option>
+          {% for u in units %}
+          <option value="{{ u.id }}">Unit {{ u.number }} (Bldg {{ u.building.number }})</option>
           {% endfor %}
         </select>
       </div>

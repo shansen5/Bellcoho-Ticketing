@@ -99,8 +99,12 @@
       <h2>Ticket Report</h2>
       <div class="meta">
         Generated: {{ generated_at.strftime('%Y-%m-%d %H:%M') }} UTC
-        {% if filters.status %} &nbsp;·&nbsp; Status: <strong>{{ filters.status }}</strong>{% endif %}
-        {% if filters.timeframe == '30days' %} &nbsp;·&nbsp; Last 30 days
+        {% if filters.statuses %} &nbsp;·&nbsp; Status: <strong>{{ filters.statuses | join(', ') }}</strong>{% endif %}
+        {% if filters.priorities %} &nbsp;·&nbsp; Priority: <strong>{{ filters.priorities | join(', ') }}</strong>{% endif %}
+        {% if filter_labels.categories %} &nbsp;·&nbsp; Category: <strong>{{ filter_labels.categories }}</strong>{% endif %}
+        {% if filter_labels.buildings %} &nbsp;·&nbsp; Building: <strong>{{ filter_labels.buildings }}</strong>{% endif %}
+        {% if filter_labels.units %} &nbsp;·&nbsp; Unit: <strong>{{ filter_labels.units }}</strong>{% endif %}
+{% if filters.timeframe == '30days' %} &nbsp;·&nbsp; Last 30 days
         {% elif filters.timeframe == '90days' %} &nbsp;·&nbsp; Last 90 days
         {% elif filters.timeframe == '12months' %} &nbsp;·&nbsp; Last 12 months
         {% elif filters.timeframe == 'custom' %}
