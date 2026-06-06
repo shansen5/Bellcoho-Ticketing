@@ -47,7 +47,7 @@ def create_app(config=None):
     # -----------------------------------------------------------------------
     login_manager = LoginManager(app)
     login_manager.login_view = "auth.login"
-    login_manager.login_message = "Please log in to access the board dashboard."
+    login_manager.login_message = "Please log in to access the dashboard."
 
     @login_manager.user_loader
     def load_user(user_id):
