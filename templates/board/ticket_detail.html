@@ -83,7 +83,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Assign to (board member / resident)</label>
+            <label class="form-label small fw-semibold">Assign to (maintenance member / resident)</label>
             <select name="assigned_to_resident_id" class="form-select form-select-sm">
               <option value="">— Unassigned —</option>
               {% for r in residents %}
@@ -301,7 +301,7 @@
           <form method="post">
             <input type="hidden" name="action" value="comment">
             <textarea name="body" class="form-control form-control-sm mb-2" rows="3"
-                      placeholder="Add a note (visible to board members only)…"></textarea>
+                      placeholder="Add a note (visible to maintenance members only)…"></textarea>
             <button type="submit" class="btn btn-sm btn-outline-secondary">
               <i class="bi bi-chat-left-text me-1"></i>Add Note
             </button>
