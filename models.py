@@ -147,9 +147,9 @@ class Ticket(db.Model):
     assigned_to_resident = db.relationship(
         "Resident", foreign_keys=[assigned_to_resident_id], back_populates="assigned_tickets"
     )
-    ticket_vendors = db.relationship("TicketVendor", back_populates="ticket", lazy="dynamic")
-    attachments = db.relationship("Attachment", back_populates="ticket", lazy="dynamic")
-    comments = db.relationship("Comment", back_populates="ticket", order_by="Comment.created_at", lazy="dynamic")
+    ticket_vendors = db.relationship("TicketVendor", back_populates="ticket", lazy="dynamic", cascade="all, delete-orphan")
+    attachments = db.relationship("Attachment", back_populates="ticket", lazy="dynamic", cascade="all, delete-orphan")
+    comments = db.relationship("Comment", back_populates="ticket", order_by="Comment.created_at", lazy="dynamic", cascade="all, delete-orphan")
 
     @property
     def effective_building(self):
