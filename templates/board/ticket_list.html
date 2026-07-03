@@ -88,7 +88,7 @@
           <th>Priority</th>
           <th>Category</th>
           <th>Unit / Bldg</th>
-          <th>Submitted by</th>
+          <th>Assigned to</th>
           <th>Description</th>
           <th>Date</th>
         </tr>
@@ -104,10 +104,10 @@
             {% if t.unit %}
               <a href="{{ url_for('board.unit_detail', unit_id=t.unit_id) }}">Unit {{ t.unit.number }}</a>
             {% elif t.effective_building %}
-              Bldg {{ t.effective_building.number }}
+              {{ t.effective_building.name or t.effective_building.display_name }}
             {% else %}—{% endif %}
           </td>
-          <td class="text-nowrap">{{ t.submitted_by_name or t.submitted_by.name if t.submitted_by else '—' }}</td>
+          <td class="text-nowrap">{{ t.assigned_to_resident.name if t.assigned_to_resident else '—' }}</td>
           <td class="text-truncate" style="max-width:220px">{{ t.description }}</td>
           <td class="text-nowrap text-muted small">{{ t.date_submitted.strftime('%Y-%m-%d') }}</td>
         </tr>

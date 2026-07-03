@@ -58,7 +58,7 @@
               <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
               <td>{{ t.category.name }}</td>
               <td>
-                {% if t.unit %}Unit {{ t.unit.number }}{% elif t.effective_building %}Bldg {{ t.effective_building.number }}{% else %}—{% endif %}
+                {% if t.unit %}Unit {{ t.unit.number }}{% elif t.effective_building %}{{ t.effective_building.name or t.effective_building.display_name }}{% else %}—{% endif %}
               </td>
               <td class="text-nowrap text-muted small">{{ t.date_submitted.strftime('%b %d') }}</td>
             </tr>
