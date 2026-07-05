@@ -231,6 +231,7 @@ def create_app(config=None):
         priority = request.args.get("priority", "")
         unit_id = request.args.get("unit_id", "")
         building_id = request.args.get("building_id", "")
+        assigned_to = request.args.get("assigned_to", "")
         search = request.args.get("search", "").strip()
         timeframe = request.args.get("timeframe", "")
 
@@ -257,6 +258,8 @@ def create_app(config=None):
                         Ticket.building_id == int(building_id)
                     )
                 )
+        if assigned_to:
+            q = q.filter(Ticket.assigned_to_resident_id == int(assigned_to))
         if search:
             like = f"%{search}%"
             q = q.filter(
@@ -274,18 +277,27 @@ def create_app(config=None):
 
         units = Unit.query.order_by(Unit.number).all()
         buildings = Building.query.order_by(Building.number).all()
+        assignees = (
+            Resident.query
+            .join(Ticket, Ticket.assigned_to_resident_id == Resident.id)
+            .distinct()
+            .order_by(Resident.name)
+            .all()
+        )
 
         return render_template(
             "board/ticket_list.html",
             tickets=tickets,
             units=units,
             buildings=buildings,
+            assignees=assignees,
             categories=Category.query.order_by(Category.name).all(),
             priorities=PRIORITY_CHOICES,
             statuses=STATUS_CHOICES,
             filters={
                 "status": status, "category": category, "priority": priority,
                 "unit_id": unit_id, "building_id": building_id,
+                "assigned_to": assigned_to,
                 "search": search, "timeframe": timeframe
             },
         )

@@ -58,6 +58,15 @@
         </select>
       </div>
       <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Assigned to</label>
+        <select name="assigned_to" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for r in assignees %}
+          <option value="{{ r.id }}" {% if filters.assigned_to == r.id|string %}selected{% endif %}>{{ r.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
         <label class="form-label small mb-1">Timeframe</label>
         <select name="timeframe" class="form-select form-select-sm">
           <option value="">All time</option>
