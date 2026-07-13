@@ -396,7 +396,7 @@ def create_app(config=None):
         writer = csv.writer(output)
         writer.writerow([
             "Ticket #", "Status", "Priority", "Category",
-            "Unit", "Building", "Submitted By", "Description",
+            "Unit", "Building", "Assigned To", "Description",
             "Date Submitted", "Date Assigned", "Date Completed",
             "Estimated Cost", "Final Cost", "Budget Category", "Vendors",
         ])
@@ -409,7 +409,7 @@ def create_app(config=None):
                 t.category.name if t.category else "",
                 f"Unit {t.unit.number}" if t.unit else "",
                 f"Bldg {bldg.number}" if bldg else "",
-                t.submitted_by_name or "",
+                t.assigned_to_resident.name if t.assigned_to_resident else "",
                 t.description,
                 t.date_submitted.strftime("%Y-%m-%d") if t.date_submitted else "",
                 t.date_assigned.strftime("%Y-%m-%d") if t.date_assigned else "",

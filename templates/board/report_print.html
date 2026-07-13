@@ -128,7 +128,7 @@
         <th>Category</th>
         <th>Unit</th>
         <th>Bldg</th>
-        <th>Submitted By</th>
+        <th>Assigned To</th>
         <th>Description</th>
         <th>Submitted</th>
         <th>Completed</th>
@@ -148,7 +148,7 @@
         <td>{{ t.category.name if t.category else '—' }}</td>
         <td>{% if t.unit %}Unit {{ t.unit.number }}{% else %}—{% endif %}</td>
         <td>{% if bldg %}Bldg {{ bldg.number }}{% else %}—{% endif %}</td>
-        <td class="text-nowrap">{{ t.submitted_by_name or '—' }}</td>
+        <td class="text-nowrap">{{ t.assigned_to_resident.name if t.assigned_to_resident else '—' }}</td>
         <td class="desc">{{ t.description }}</td>
         <td>{{ t.date_submitted.strftime('%Y-%m-%d') if t.date_submitted else '—' }}</td>
         <td>{{ t.date_completed.strftime('%Y-%m-%d') if t.date_completed else '—' }}</td>
