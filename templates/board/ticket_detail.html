@@ -11,12 +11,16 @@
   <span class="badge badge-{{ ticket.status }} fs-6">{{ ticket.status }}</span>
   <span class="badge badge-{{ ticket.priority }}">{{ ticket.priority }}</span>
   <span class="ms-auto text-muted small">Submitted {{ ticket.date_submitted.strftime('%B %d, %Y') }}</span>
+  {% if current_user.is_guest %}
+  <span class="badge bg-secondary"><i class="bi bi-eye me-1"></i>Read-only</span>
+  {% else %}
   <form method="post" action="{{ url_for('board.delete_ticket', ticket_id=ticket.id) }}"
         onsubmit="return confirm('Permanently delete Ticket #{{ ticket.id }}? This cannot be undone.')">
     <button type="submit" class="btn btn-sm btn-outline-danger">
       <i class="bi bi-trash me-1"></i>Delete
     </button>
   </form>
+  {% endif %}
 </div>
 
 <div class="row g-4">
@@ -28,7 +32,7 @@
       <div class="card-header fw-semibold">Ticket Details</div>
       <div class="card-body">
         <form method="post">
-          <input type="hidden" name="action" value="update">
+          <fieldset {% if current_user.is_guest %}disabled{% endif %}>
 
           <div class="row g-3 mb-3">
             <div class="col-sm-4">
@@ -149,15 +153,16 @@
           </div>
 
           <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" name="action" value="update" class="btn btn-primary btn-sm">
               <i class="bi bi-floppy me-1"></i>Save Changes
             </button>
             {% if ticket.status != 'Completed' %}
-            <button type="submit" name="status" value="Completed" class="btn btn-success btn-sm">
+            <button type="submit" name="action" value="complete" class="btn btn-success btn-sm">
               <i class="bi bi-check2 me-1"></i>Mark Complete
             </button>
             {% endif %}
           </div>
+          </fieldset>
 
         </form>
       </div>
@@ -214,6 +219,7 @@
                    title="{{ att.original_filename }}"
                    onerror="this.src=''; this.alt='Preview unavailable'">
             </a>
+            {% if not current_user.is_guest %}
             <form method="post"
                   action="{{ url_for('board.delete_attachment', ticket_id=ticket.id, att_id=att.id) }}"
                   class="d-inline position-absolute top-0 end-0 m-0">
@@ -221,6 +227,7 @@
                       onclick="return confirm('Remove photo?')"
                       title="Remove">×</button>
             </form>
+            {% endif %}
           </div>
           {% endfor %}
         </div>
@@ -228,6 +235,7 @@
         <p class="text-muted small mb-2">No photos attached.</p>
         {% endif %}
 
+        {% if not current_user.is_guest %}
         <form method="post" enctype="multipart/form-data">
           <input type="hidden" name="action" value="upload">
           <input type="file" name="photos" class="form-control form-control-sm" accept="image/*" multiple>
@@ -235,6 +243,7 @@
             <i class="bi bi-upload me-1"></i>Upload Photos
           </button>
         </form>
+        {% endif %}
       </div>
     </div>
 
@@ -253,11 +262,13 @@
             <a href="{{ url_for('public.uploaded_file', filepath='documents/' + att.filename) }}" target="_blank">
               {{ att.original_filename }}
             </a>
+            {% if not current_user.is_guest %}
             <form method="post" class="ms-auto"
                   action="{{ url_for('board.delete_attachment', ticket_id=ticket.id, att_id=att.id) }}">
               <button type="submit" class="btn btn-link btn-sm text-danger p-0"
                       onclick="return confirm('Remove document?')">remove</button>
             </form>
+            {% endif %}
           </li>
           {% endfor %}
         </ul>
@@ -265,6 +276,7 @@
         <p class="text-muted small mb-2">No documents attached.</p>
         {% endif %}
 
+        {% if not current_user.is_guest %}
         <form method="post" enctype="multipart/form-data">
           <input type="hidden" name="action" value="upload">
           <input type="file" name="documents" class="form-control form-control-sm"
@@ -273,6 +285,7 @@
             <i class="bi bi-upload me-1"></i>Upload Documents
           </button>
         </form>
+        {% endif %}
       </div>
     </div>
 
@@ -297,6 +310,7 @@
           <div class="list-group-item text-muted small py-3 text-center">No notes yet.</div>
           {% endfor %}
         </div>
+        {% if not current_user.is_guest %}
         <div class="p-3 border-top">
           <form method="post">
             <input type="hidden" name="action" value="comment">
@@ -307,6 +321,7 @@
             </button>
           </form>
         </div>
+        {% endif %}
       </div>
     </div>
 

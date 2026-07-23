@@ -204,6 +204,7 @@ class BoardUser(UserMixin, db.Model):
     email = db.Column(db.String(200))
     password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    is_guest = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

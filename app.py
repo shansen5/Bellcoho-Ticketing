@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 import csv
 import io
@@ -184,7 +185,12 @@ def create_app(config=None):
     @board.before_request
     @login_required
     def require_login():
-        pass
+        if current_user.is_guest and request.method != "GET":
+            flash("Guest accounts are read-only and cannot make changes.", "warning")
+            ref = request.referrer
+            if ref and urlparse(ref).netloc not in ("", request.host):
+                ref = None
+            return redirect(ref or url_for("board.dashboard"))
 
     # ---------- Dashboard ---------------------------------------------------
 
@@ -497,9 +503,12 @@ def create_app(config=None):
                 flash("Attachments uploaded.", "success")
                 return redirect(url_for("board.ticket_detail", ticket_id=ticket.id))
 
-            # Default: update ticket fields
+            # Default: update ticket fields (also used by the "Mark Complete" button)
             old_status = ticket.status
-            ticket.status = request.form.get("status", ticket.status)
+            if action == "complete":
+                ticket.status = "Completed"
+            else:
+                ticket.status = request.form.get("status", ticket.status)
             new_cat_id = request.form.get("category")
             if new_cat_id:
                 ticket.category_id = int(new_cat_id)
@@ -542,6 +551,9 @@ def create_app(config=None):
                 db.session.add(TicketVendor(ticket_id=ticket.id, vendor_id=int(vid)))
 
             db.session.commit()
+            if action == "complete":
+                flash("Ticket marked complete.", "success")
+                return redirect(url_for("board.ticket_list"))
             flash("Ticket updated.", "success")
             return redirect(url_for("board.ticket_detail", ticket_id=ticket.id))
 
@@ -712,6 +724,7 @@ def create_app(config=None):
             for col_sql in [
                 "ALTER TABLE tickets ADD COLUMN other_workers TEXT",
                 "ALTER TABLE tickets ADD COLUMN budget_category VARCHAR(100)",
+                "ALTER TABLE board_users ADD COLUMN is_guest BOOLEAN DEFAULT 0",
             ]:
                 try:
                     conn.execute(db.text(col_sql))
@@ -730,7 +743,8 @@ def create_app(config=None):
         email = input("Email (optional): ").strip()
         password = getpass.getpass("Password: ")
         is_admin = input("Admin? (y/N): ").strip().lower() == "y"
-        u = BoardUser(username=username, email=email, is_admin=is_admin)
+        is_guest = input("Guest (read-only)? (y/N): ").strip().lower() == "y"
+        u = BoardUser(username=username, email=email, is_admin=is_admin, is_guest=is_guest)
         u.set_password(password)
         db.session.add(u)
         db.session.commit()

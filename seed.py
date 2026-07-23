@@ -108,5 +108,12 @@ def seed_data(db):
         db.session.add(admin)
         print("  Created default admin user (username=admin, password=admin). CHANGE THIS!")
 
+    # Default read-only guest board user (username: guest, password: guest – change immediately!)
+    if not BoardUser.query.filter_by(username="guest").first():
+        guest = BoardUser(username="guest", email=None, is_admin=False, is_guest=True)
+        guest.set_password("guest")
+        db.session.add(guest)
+        print("  Created default guest user (username=guest, password=guest). CHANGE THIS!")
+
     db.session.commit()
     print("  Seeded 12 buildings and 33 units.")

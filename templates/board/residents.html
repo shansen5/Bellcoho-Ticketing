@@ -6,6 +6,7 @@
 
 <div class="row g-4">
 
+  {% if not current_user.is_guest %}
   <!-- Add resident form -->
   <div class="col-lg-4">
     <div class="card shadow-sm">
@@ -38,9 +39,10 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Resident list -->
-  <div class="col-lg-8">
+  <div class="{% if current_user.is_guest %}col-lg-12{% else %}col-lg-8{% endif %}">
     <div class="card shadow-sm">
       <div class="card-header fw-semibold">All Residents ({{ residents|length }})</div>
       <div class="table-responsive">
@@ -68,11 +70,13 @@
                 </a>
               </td>
               <td>
+                {% if not current_user.is_guest %}
                 <form method="post" action="{{ url_for('board.delete_resident', resident_id=r.id) }}"
                       class="d-inline">
                   <button type="submit" class="btn btn-link btn-sm text-danger p-0"
                           onclick="return confirm('Remove this resident?')">remove</button>
                 </form>
+                {% endif %}
               </td>
             </tr>
             {% else %}

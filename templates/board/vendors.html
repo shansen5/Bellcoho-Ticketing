@@ -6,6 +6,7 @@
 
 <div class="row g-4">
 
+  {% if not current_user.is_guest %}
   <!-- Add vendor -->
   <div class="col-lg-4">
     <div class="card shadow-sm">
@@ -38,9 +39,10 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Vendor list -->
-  <div class="col-lg-8">
+  <div class="{% if current_user.is_guest %}col-lg-12{% else %}col-lg-8{% endif %}">
     <div class="card shadow-sm">
       <div class="card-header fw-semibold">All Vendors ({{ vendors|length }})</div>
       {% if vendors %}
@@ -57,6 +59,7 @@
           <div id="v{{ v.id }}" class="accordion-collapse collapse" data-bs-parent="#vendorAccordion">
             <div class="accordion-body small">
               <form method="post" action="{{ url_for('board.edit_vendor', vendor_id=v.id) }}">
+                <fieldset {% if current_user.is_guest %}disabled{% endif %}>
                 <div class="row g-2 mb-2">
                   <div class="col-sm-6">
                     <label class="form-label small mb-1">Name</label>
@@ -86,11 +89,14 @@
                 <div class="d-flex gap-2">
                   <button type="submit" class="btn btn-sm btn-primary">Save</button>
                 </div>
+                </fieldset>
               </form>
+              {% if not current_user.is_guest %}
               <form method="post" action="{{ url_for('board.delete_vendor', vendor_id=v.id) }}" class="mt-2">
                 <button type="submit" class="btn btn-sm btn-link text-danger p-0"
                         onclick="return confirm('Delete this vendor?')">Delete vendor</button>
               </form>
+              {% endif %}
             </div>
           </div>
         </div>
