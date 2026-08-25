@@ -10,6 +10,7 @@ from flask import (
     Flask, render_template, redirect, url_for, request,
     flash, send_from_directory, abort, jsonify, make_response, Response
 )
+from sqlalchemy import case
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, current_user
 )
@@ -321,6 +322,7 @@ def create_app(config=None):
         timeframe    = request.args.get("timeframe", "")
         date_from    = request.args.get("date_from", "").strip()
         date_to      = request.args.get("date_to", "").strip()
+        sort_by      = request.args.get("sort_by", "")
 
         q = Ticket.query
 
@@ -373,11 +375,23 @@ def create_app(config=None):
                 except ValueError:
                     pass
 
-        tickets = q.order_by(Ticket.date_submitted.desc()).all()
+        if sort_by == "status":
+            status_order = case(
+                {status: i for i, status in enumerate(STATUS_CHOICES)},
+                value=Ticket.status,
+            )
+            q = q.order_by(status_order, Ticket.date_submitted.desc())
+        elif sort_by == "category":
+            q = q.join(Category).order_by(Category.name, Ticket.date_submitted.desc())
+        else:
+            q = q.order_by(Ticket.date_submitted.desc())
+
+        tickets = q.all()
         filters = {
             "statuses": statuses, "priorities": priorities,
             "category_ids": category_ids, "building_ids": building_ids, "unit_ids": unit_ids,
             "timeframe": timeframe, "date_from": date_from, "date_to": date_to,
+            "sort_by": sort_by,
         }
         return tickets, filters
 

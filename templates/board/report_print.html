@@ -112,6 +112,9 @@
           {% if filters.date_from %}From {{ filters.date_from }}{% endif %}
           {% if filters.date_to %} to {{ filters.date_to }}{% endif %}
         {% endif %}
+        {% if filters.sort_by == 'status' %} &nbsp;·&nbsp; Sorted by: <strong>Ticket status</strong>
+        {% elif filters.sort_by == 'category' %} &nbsp;·&nbsp; Sorted by: <strong>Category</strong>
+        {% endif %}
         &nbsp;·&nbsp; <strong>{{ tickets|length }}</strong> ticket{{ 's' if tickets|length != 1 }}
       </div>
     </div>

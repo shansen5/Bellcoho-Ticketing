@@ -97,6 +97,16 @@
         </div>
       </div>
 
+      <!-- Sort order -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Order By</label>
+        <select name="sort_by" class="form-select">
+          <option value="">Date submitted (newest first)</option>
+          <option value="status">Ticket status</option>
+          <option value="category">Category</option>
+        </select>
+      </div>
+
       <!-- Export buttons -->
       <div class="d-flex gap-2 mt-4">
         <button type="submit" formaction="{{ url_for('board.reports_download') }}"
