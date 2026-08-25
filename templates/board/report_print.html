@@ -114,6 +114,7 @@
         {% endif %}
         {% if filters.sort_by == 'status' %} &nbsp;·&nbsp; Sorted by: <strong>Ticket status</strong>
         {% elif filters.sort_by == 'category' %} &nbsp;·&nbsp; Sorted by: <strong>Category</strong>
+        {% elif filters.sort_by == 'assigned_to' %} &nbsp;·&nbsp; Sorted by: <strong>Assigned to</strong>
         {% endif %}
         &nbsp;·&nbsp; <strong>{{ tickets|length }}</strong> ticket{{ 's' if tickets|length != 1 }}
       </div>

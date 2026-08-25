@@ -383,6 +383,10 @@ def create_app(config=None):
             q = q.order_by(status_order, Ticket.date_submitted.desc())
         elif sort_by == "category":
             q = q.join(Category).order_by(Category.name, Ticket.date_submitted.desc())
+        elif sort_by == "assigned_to":
+            q = q.outerjoin(Resident, Ticket.assigned_to_resident_id == Resident.id).order_by(
+                Resident.name.is_(None), Resident.name, Ticket.date_submitted.desc()
+            )
         else:
             q = q.order_by(Ticket.date_submitted.desc())
 
